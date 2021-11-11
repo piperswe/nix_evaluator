@@ -31,21 +31,6 @@
         "type": "github"
       }
     },
-    "flake-utils_2": {
-      "locked": {
-        "lastModified": 1623875721,
-        "narHash": "sha256-A8BU7bjS5GirpAUv4QA+QnJ4CceLHkcXdRp4xITDB0s=",
-        "owner": "numtide",
-        "repo": "flake-utils",
-        "rev": "f7e004a55b120c02ecb6219596820fcd32ca8772",
-        "type": "github"
-      },
-      "original": {
-        "owner": "numtide",
-        "repo": "flake-utils",
-        "type": "github"
-      }
-    },
     "mkRustFlake": {
       "inputs": {
         "flake-utils": "flake-utils",
@@ -53,11 +38,11 @@
         "rust-overlay": "rust-overlay"
       },
       "locked": {
-        "lastModified": 1636673530,
-        "narHash": "sha256-btXVYwwGsy+1btS6/Y8mQUls04b62iLRviMQwczSfJY=",
+        "lastModified": 1636673666,
+        "narHash": "sha256-1m+Pa0XmS8dgLOMdlEJqzPqQNGlRK+BWafFBTIZFXq0=",
         "owner": "piperswe",
         "repo": "mkrustflake",
-        "rev": "459a2a53bb5d08517f067882088f91d09380a14f",
+        "rev": "320116356350f6390550a785e47452f14d3acd07",
         "type": "github"
       },
       "original": {
@@ -81,21 +66,6 @@
         "type": "github"
       }
     },
-    "nixpkgs_2": {
-      "locked": {
-        "lastModified": 1628186154,
-        "narHash": "sha256-r2d0wvywFnL9z4iptztdFMhaUIAaGzrSs7kSok0PgmE=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "06552b72346632b6943c8032e57e702ea12413bf",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
     "root": {
       "inputs": {
         "flake-compat": "flake-compat",
@@ -104,8 +74,14 @@
     },
     "rust-overlay": {
       "inputs": {
-        "flake-utils": "flake-utils_2",
-        "nixpkgs": "nixpkgs_2"
+        "flake-utils": [
+          "mkRustFlake",
+          "flake-utils"
+        ],
+        "nixpkgs": [
+          "mkRustFlake",
+          "nixpkgs"
+        ]
       },
       "locked": {
         "lastModified": 1636596933,
