@@ -148,9 +148,9 @@ fn eval_literal(node: rnix::types::Value) -> Result<Value> {
 }
 
 fn eval_bin_op(node: BinOp, context: EvaluationContext) -> Result<Value> {
-    let lhs = eval_ctx(expect_child(node.lhs())?, context.clone())?;
+    let lhs = eval_ctx(expect_child(node.lhs())?, context.clone())?.materialize()?;
     let rhs_node = expect_child(node.rhs())?;
-    let rhs = || eval_ctx(rhs_node, context);
+    let rhs = || eval_ctx(rhs_node, context)?.materialize();
     match node.operator() {
         BinOpKind::Concat => nyi("concatenation"),
         BinOpKind::IsSet => nyi("isset"),

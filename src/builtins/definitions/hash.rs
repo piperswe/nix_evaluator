@@ -7,6 +7,7 @@ use crate::{
 
 #[cfg(feature = "md5")]
 fn hash_string_md5(s: Value) -> Result {
+    let s = s.materialize()?;
     if let Value::String(s) = s {
         let digest = md5::compute(s.as_bytes());
         Ok(format!("{:x}", digest).into())
@@ -25,6 +26,7 @@ fn hash_string_md5(_: Value) -> Result {
 #[cfg(feature = "sha1")]
 fn hash_string_sha1(s: Value) -> Result {
     use sha1::{Digest, Sha1};
+    let s = s.materialize()?;
     if let Value::String(s) = s {
         let mut hasher = Sha1::new();
         hasher.update(s.as_bytes());
@@ -45,6 +47,7 @@ fn hash_string_sha1(_: Value) -> Result {
 #[cfg(feature = "sha256")]
 fn hash_string_sha256(s: Value) -> Result {
     use sha2::{Digest, Sha256};
+    let s = s.materialize()?;
     if let Value::String(s) = s {
         let mut hasher = Sha256::new();
         hasher.update(s.as_bytes());
@@ -65,6 +68,7 @@ fn hash_string_sha256(_: Value) -> Result {
 #[cfg(feature = "sha512")]
 fn hash_string_sha512(s: Value) -> Result {
     use sha2::{Digest, Sha512};
+    let s = s.materialize()?;
     if let Value::String(s) = s {
         let mut hasher = Sha512::new();
         hasher.update(s.as_bytes());
@@ -83,6 +87,7 @@ fn hash_string_sha512(_: Value) -> Result {
 }
 
 pub fn hash_string(t: Value) -> Result {
+    let t = t.materialize()?;
     if let Value::String(t) = t {
         if t == "md5" {
             Ok(Value::BuiltinFunction(Rc::new(hash_string_md5)))

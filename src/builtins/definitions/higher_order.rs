@@ -8,11 +8,13 @@ use crate::{
 };
 
 pub fn all(pred: Value) -> Result {
+    let pred = pred.materialize()?;
     if pred.callable() {
         Ok(Value::BuiltinFunction(Rc::new(move |list| {
+            let list = list.materialize()?;
             if let Value::List(list) = list {
                 for x in list.iter() {
-                    let res = pred.clone().call(x.to_owned())?;
+                    let res = pred.clone().call(x.to_owned())?.materialize()?;
                     if let Value::Boolean(res) = res {
                         if !res {
                             return Ok(false.into());
@@ -32,11 +34,13 @@ pub fn all(pred: Value) -> Result {
 }
 
 pub fn any(pred: Value) -> Result {
+    let pred = pred.materialize()?;
     if pred.callable() {
         Ok(Value::BuiltinFunction(Rc::new(move |list| {
+            let list = list.materialize()?;
             if let Value::List(list) = list {
                 for x in list.iter() {
-                    let res = pred.clone().call(x.to_owned())?;
+                    let res = pred.clone().call(x.to_owned())?.materialize()?;
                     if let Value::Boolean(res) = res {
                         if res {
                             return Ok(true.into());
@@ -56,12 +60,14 @@ pub fn any(pred: Value) -> Result {
 }
 
 pub fn concat_map(f: Value) -> Result {
+    let f = f.materialize()?;
     if f.callable() {
         Ok(Value::BuiltinFunction(Rc::new(move |list| {
+            let list = list.materialize()?;
             if let Value::List(list) = list {
                 let mut res = Vector::new();
                 for x in list.iter() {
-                    let f_res = f.clone().call(x.to_owned())?;
+                    let f_res = f.clone().call(x.to_owned())?.materialize()?;
                     if let Value::List(f_res) = f_res {
                         for x in f_res.iter() {
                             res.push_back_mut(x.to_owned());
@@ -81,12 +87,14 @@ pub fn concat_map(f: Value) -> Result {
 }
 
 pub fn filter(f: Value) -> Result {
+    let f = f.materialize()?;
     if f.callable() {
         Ok(Value::BuiltinFunction(Rc::new(move |list| {
+            let list = list.materialize()?;
             if let Value::List(list) = list {
                 let mut res = Vector::new();
                 for x in list.iter() {
-                    if let Value::Boolean(true) = f.clone().call(x.to_owned())? {
+                    if let Value::Boolean(true) = f.clone().call(x.to_owned())?.materialize()? {
                         res.push_back_mut(x.to_owned());
                     }
                 }
@@ -101,14 +109,21 @@ pub fn filter(f: Value) -> Result {
 }
 
 pub fn foldl(op: Value) -> Result {
+    let op = op.materialize()?;
     if op.callable() {
         Ok(Value::BuiltinFunction(Rc::new(move |nul| {
             let op = op.clone();
+            let nul = nul.materialize()?;
             Ok(Value::BuiltinFunction(Rc::new(move |list| {
+                let list = list.materialize()?;
                 if let Value::List(list) = list {
                     let mut accumulator = nul.clone();
                     for v in list.iter() {
-                        accumulator = op.clone().call(accumulator)?.call(v.to_owned())?;
+                        accumulator = op
+                            .clone()
+                            .call(accumulator)?
+                            .call(v.to_owned())?
+                            .materialize()?;
                     }
                     Ok(accumulator)
                 } else {
@@ -126,8 +141,10 @@ pub fn function_args(_: Value) -> Result {
 }
 
 pub fn gen_list(generator: Value) -> Result {
+    let generator = generator.materialize()?;
     if generator.callable() {
         Ok(Value::BuiltinFunction(Rc::new(move |length| {
+            let length = length.materialize()?;
             if let Value::Integer(length) = length {
                 let mut v = Vector::new();
                 for i in 0..length {
@@ -144,8 +161,10 @@ pub fn gen_list(generator: Value) -> Result {
 }
 
 pub fn map(f: Value) -> Result {
+    let f = f.materialize()?;
     if f.callable() {
         Ok(Value::BuiltinFunction(Rc::new(move |list| {
+            let list = list.materialize()?;
             if let Value::List(list) = list {
                 let mut res = Vector::new();
                 for x in list.iter() {
@@ -162,8 +181,10 @@ pub fn map(f: Value) -> Result {
 }
 
 pub fn map_attrs(f: Value) -> Result {
+    let f = f.materialize()?;
     if f.callable() {
         Ok(Value::BuiltinFunction(Rc::new(move |attrset| {
+            let attrset = attrset.materialize()?;
             if let Value::AttrSet(attrset) = attrset {
                 let mut res = HashTrieMap::new();
                 for (k, v) in attrset.iter() {
@@ -183,8 +204,10 @@ pub fn map_attrs(f: Value) -> Result {
 }
 
 pub fn partition(pred: Value) -> Result {
+    let pred = pred.materialize()?;
     if pred.callable() {
         Ok(Value::BuiltinFunction(Rc::new(move |list| {
+            let list = list.materialize()?;
             if let Value::List(list) = list {
                 let mut right = Vector::new();
                 let mut wrong = Vector::new();

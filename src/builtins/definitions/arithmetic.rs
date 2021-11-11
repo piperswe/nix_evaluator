@@ -6,8 +6,10 @@ use crate::{
 };
 
 fn binary_numeric<F: 'static + Fn(Value, Value) -> Result>(e1: Value, f: F) -> Result {
+    let e1 = e1.materialize()?;
     if e1.is_numeric() {
         Ok(Value::BuiltinFunction(Rc::new(move |e2| {
+            let e2 = e2.materialize()?;
             if e2.is_numeric() {
                 f(e1.clone(), e2)
             } else {
@@ -36,8 +38,10 @@ pub fn div(e1: Value) -> Result {
 }
 
 fn binary_integral<F: 'static + Fn(i64, i64) -> Result>(e1: Value, f: F) -> Result {
+    let e1 = e1.materialize()?;
     if let Value::Integer(e1) = e1 {
         Ok(Value::BuiltinFunction(Rc::new(move |e2| {
+            let e2 = e2.materialize()?;
             if let Value::Integer(e2) = e2 {
                 f(e1, e2)
             } else {
@@ -62,6 +66,7 @@ pub fn bit_xor(e1: Value) -> Result {
 }
 
 pub fn ceil(double: Value) -> Result {
+    let double = double.materialize()?;
     if let Value::Floating(double) = double {
         Ok(double.ceil().into())
     } else {
@@ -70,6 +75,7 @@ pub fn ceil(double: Value) -> Result {
 }
 
 pub fn floor(double: Value) -> Result {
+    let double = double.materialize()?;
     if let Value::Floating(double) = double {
         Ok(double.floor().into())
     } else {

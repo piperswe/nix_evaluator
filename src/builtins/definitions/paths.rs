@@ -10,6 +10,7 @@ pub fn base_name_of(_: Value) -> Result {
 }
 
 pub fn dir_of(s: Value) -> Result {
+    let s = s.materialize()?;
     if let Value::String(s) = s {
         let path = Path::new(&s);
         Ok(path

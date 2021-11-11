@@ -8,9 +8,11 @@ use crate::{
 };
 
 pub fn concat_lists(lists: Value) -> Result {
+    let lists = lists.materialize()?;
     if let Value::List(lists) = lists {
         let mut res = Vector::new();
         for list in lists.iter() {
+            let list = list.to_owned().materialize()?;
             if let Value::List(list) = list {
                 for x in list.iter() {
                     res.push_back_mut(x.to_owned());
@@ -26,7 +28,9 @@ pub fn concat_lists(lists: Value) -> Result {
 }
 
 pub fn elem(x: Value) -> Result {
+    let x = x.materialize()?;
     Ok(Value::BuiltinFunction(Rc::new(move |xs| {
+        let xs = xs.materialize()?;
         if let Value::List(xs) = xs {
             Ok(xs.iter().any(|y| x.eq(y)).into())
         } else {
@@ -36,8 +40,10 @@ pub fn elem(x: Value) -> Result {
 }
 
 pub fn elem_at(xs: Value) -> Result {
+    let xs = xs.materialize()?;
     if let Value::List(xs) = xs {
         Ok(Value::BuiltinFunction(Rc::new(move |n| {
+            let n = n.materialize()?;
             if let Value::Integer(n) = n {
                 if n < 0 || (usize::BITS < (i64::BITS - 1) && n > (usize::MAX as i64)) {
                     Err(BuiltinError::OutOfBounds(n).into())
@@ -56,6 +62,7 @@ pub fn elem_at(xs: Value) -> Result {
 }
 
 pub fn head(list: Value) -> Result {
+    let list = list.materialize()?;
     if let Value::List(list) = list {
         if let Some(x) = list.first() {
             Ok(x.to_owned())
@@ -68,6 +75,7 @@ pub fn head(list: Value) -> Result {
 }
 
 pub fn length(e: Value) -> Result {
+    let e = e.materialize()?;
     if let Value::List(e) = e {
         Ok((e.len() as i64).into())
     } else {
@@ -76,6 +84,7 @@ pub fn length(e: Value) -> Result {
 }
 
 pub fn tail(list: Value) -> Result {
+    let list = list.materialize()?;
     if let Value::List(list) = list {
         let mut ret = Vector::new();
         for v in list.iter().skip(1) {

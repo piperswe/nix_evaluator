@@ -8,6 +8,7 @@ use crate::{
 };
 
 pub fn attr_names(set: Value) -> Result {
+    let set = set.materialize()?;
     if let Value::AttrSet(set) = set {
         Ok(Value::List(
             set.keys().map(|k| Value::String(k.to_owned())).collect(),
@@ -18,6 +19,7 @@ pub fn attr_names(set: Value) -> Result {
 }
 
 pub fn attr_values(set: Value) -> Result {
+    let set = set.materialize()?;
     if let Value::AttrSet(set) = set {
         Ok(Value::List(set.values().map(|v| v.to_owned()).collect()))
     } else {
@@ -26,11 +28,14 @@ pub fn attr_values(set: Value) -> Result {
 }
 
 pub fn cat_attrs(attr: Value) -> Result {
+    let attr = attr.materialize()?;
     if let Value::String(attr) = attr {
         Ok(Value::BuiltinFunction(Rc::new(move |list| {
+            let list = list.materialize()?;
             if let Value::List(list) = list {
                 let mut result = Vector::new();
                 for x in list.iter() {
+                    let x = x.to_owned().materialize()?;
                     if let Value::AttrSet(set) = x {
                         if let Some(v) = set.get(&attr) {
                             result.push_back_mut(v.to_owned());
@@ -50,8 +55,10 @@ pub fn cat_attrs(attr: Value) -> Result {
 }
 
 pub fn get_attr(s: Value) -> Result {
+    let s = s.materialize()?;
     if let Value::String(s) = s {
         Ok(Value::BuiltinFunction(Rc::new(move |set| {
+            let set = set.materialize()?;
             if let Value::AttrSet(set) = set {
                 Ok(set.get(&s).map_or(Value::Null, ToOwned::to_owned))
             } else {
@@ -64,8 +71,10 @@ pub fn get_attr(s: Value) -> Result {
 }
 
 pub fn has_attr(s: Value) -> Result {
+    let s = s.materialize()?;
     if let Value::String(s) = s {
         Ok(Value::BuiltinFunction(Rc::new(move |set| {
+            let set = set.materialize()?;
             if let Value::AttrSet(set) = set {
                 Ok(set.contains_key(&s).into())
             } else {
@@ -78,8 +87,10 @@ pub fn has_attr(s: Value) -> Result {
 }
 
 pub fn intersect_attrs(e1: Value) -> Result {
+    let e1 = e1.materialize()?;
     if let Value::AttrSet(e1) = e1 {
         Ok(Value::BuiltinFunction(Rc::new(move |e2| {
+            let e2 = e2.materialize()?;
             if let Value::AttrSet(e2) = e2 {
                 let mut res = e2.clone();
                 for (k, _) in e2.iter() {
@@ -98,11 +109,14 @@ pub fn intersect_attrs(e1: Value) -> Result {
 }
 
 pub fn list_to_attrs(e: Value) -> Result {
+    let e = e.materialize()?;
     if let Value::List(e) = e {
         let mut attrs = HashTrieMap::new();
         for v in e.iter() {
+            let v = v.to_owned().materialize()?;
             if let Value::AttrSet(v) = v {
                 if let Some(name) = v.get("name") {
+                    let name = name.to_owned().materialize()?;
                     if let Value::String(name) = name {
                         if let Some(value) = v.get("value") {
                             attrs.insert_mut(name.to_string(), value.to_owned());
@@ -126,14 +140,17 @@ pub fn list_to_attrs(e: Value) -> Result {
 }
 
 pub fn remove_attrs(set: Value) -> Result {
+    let set = set.materialize()?;
     if let Value::AttrSet(set) = set {
         Ok(Value::BuiltinFunction(Rc::new(move |list| {
+            let list = list.materialize()?;
             if let Value::List(list) = list {
                 let mut new_set = set.clone();
                 for remove in list.iter() {
+                    let remove = remove.to_owned().materialize()?;
                     if let Value::String(remove) = remove {
-                        if new_set.contains_key(remove) {
-                            new_set.remove_mut(remove);
+                        if new_set.contains_key(&remove) {
+                            new_set.remove_mut(&remove);
                         }
                     } else {
                         return mismatch("string", remove.to_owned());

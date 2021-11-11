@@ -9,8 +9,10 @@ use crate::{
 
 #[cfg(feature = "compare_versions")]
 pub fn compare_versions(s1: Value) -> Result {
+    let s1 = s1.materialize()?;
     if let Value::String(s1) = s1 {
         Ok(Value::BuiltinFunction(Rc::new(move |s2| {
+            let s2 = s2.materialize()?;
             if let Value::String(s2) = s2 {
                 use version_compare::*;
                 match compare(s1.clone(), s2.clone()) {
@@ -37,14 +39,17 @@ pub fn compare_versions(_: Value) -> Result {
 }
 
 pub fn concat_strings_sep(separator: Value) -> Result {
+    let separator = separator.materialize()?;
     if let Value::String(separator) = separator {
         Ok(Value::BuiltinFunction(Rc::new(move |list| {
+            let list = list.materialize()?;
             if let Value::List(list) = list {
                 Ok(list
                     .iter()
                     .map(|v| {
+                        let v = v.to_owned().materialize()?;
                         if let Value::String(v) = v {
-                            Ok(v.to_owned())
+                            Ok(v)
                         } else {
                             mismatch("string", v.to_owned())
                         }
@@ -63,6 +68,7 @@ pub fn concat_strings_sep(separator: Value) -> Result {
 
 #[cfg(feature = "json")]
 pub fn from_json(e: Value) -> Result {
+    let e = e.materialize()?;
     if let Value::String(e) = e {
         Ok(serde_json::from_str(&e).map_err(BuiltinError::from)?)
     } else {
@@ -79,6 +85,7 @@ pub fn from_json(_: Value) -> Result {
 
 #[cfg(feature = "json")]
 pub fn to_json(e: Value) -> Result {
+    let e = e.materialize_deep()?;
     Ok(serde_json::to_string(&e)
         .map_err(BuiltinError::from)?
         .into())
@@ -92,6 +99,7 @@ pub fn to_json(_: Value) -> Result {
 }
 
 pub fn get_env(s: Value) -> Result {
+    let s = s.materialize()?;
     if let Value::String(s) = s {
         match env::var(s.clone()) {
             Ok(x) => Ok(x.into()),
@@ -106,9 +114,11 @@ pub fn get_env(s: Value) -> Result {
 #[cfg(feature = "regex")]
 pub fn f_match(regex: Value) -> Result {
     use regex::Regex;
+    let regex = regex.materialize()?;
     if let Value::String(regex) = regex {
         let re = Regex::new(&regex).map_err(BuiltinError::from)?;
         Ok(Value::BuiltinFunction(Rc::new(move |str| {
+            let str = str.materialize()?;
             if let Value::String(str) = str {
                 if let Some(captures) = re.captures(&str) {
                     Ok(Value::List(
@@ -143,6 +153,7 @@ pub fn parse_drv_name(s: Value) -> Result {
         attrset.insert_mut("version".into(), version.map_or(Value::Null, Value::String));
         Value::AttrSet(attrset)
     }
+    let s = s.materialize()?;
     if let Value::String(s) = s {
         Ok(s.clone().split_once('-').map_or_else(
             || name_version_pair(s, None),
@@ -154,13 +165,16 @@ pub fn parse_drv_name(s: Value) -> Result {
 }
 
 pub fn replace_strings(from: Value) -> Result {
+    let from = from.materialize_deep()?;
     if let Value::List(from) = from {
         Ok(Value::BuiltinFunction(Rc::new(move |to| {
+            let to = to.materialize_deep()?;
             if let Value::List(to) = to {
                 if from.len() == to.len() {
                     let l = from.len();
                     let from = from.clone();
                     Ok(Value::BuiltinFunction(Rc::new(move |s| {
+                        let s = s.materialize()?;
                         if let Value::String(s) = s {
                             let mut res = s.clone();
                             for i in 0..l {
@@ -204,14 +218,14 @@ pub fn replace_strings(from: Value) -> Result {
 #[cfg(feature = "regex")]
 pub fn split(regex: Value) -> Result {
     use regex::Regex;
+    let regex = regex.materialize()?;
     if let Value::String(regex) = regex {
         let re = Regex::new(&regex).map_err(BuiltinError::from)?;
         Ok(Value::BuiltinFunction(Rc::new(move |str| {
+            let str = str.materialize()?;
             if let Value::String(str) = str {
                 Ok(Value::List(
-                    re.split(&str)
-                        .map(|x| Value::String(x.to_string()))
-                        .collect(),
+                    re.split(&str).map(|x| x.to_string().into()).collect(),
                 ))
             } else {
                 mismatch("string", str)
@@ -234,6 +248,7 @@ pub fn split_version(_: Value) -> Result {
 }
 
 pub fn string_length(e: Value) -> Result {
+    let e = e.materialize()?;
     if let Value::String(e) = e {
         Ok(Value::Integer(e.len() as i64))
     } else {
@@ -242,6 +257,7 @@ pub fn string_length(e: Value) -> Result {
 }
 
 pub fn substring(start: Value) -> Result {
+    let start = start.materialize()?;
     if let Value::Integer(start) = start {
         Ok(Value::BuiltinFunction(Rc::new(move |len| {
             if let Value::Integer(len) = len {
