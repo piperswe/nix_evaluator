@@ -36,5 +36,9 @@
       defaultPackage = self.packages.${system}.nix_evaluator;
 
       devShell = self.defaultPackage.${system};
+
+      hydraJobs = {
+        packages = self.packages.${system};
+      };
     });
 }
