@@ -6,6 +6,8 @@ use rustyline::Editor;
 fn main() -> Result<()> {
     color_eyre::install()?;
     let mut rl = Editor::<()>::new();
+    println!("nix_evaluator version 0.0.0");
+    println!("enter Nix expressions, and the evaluation result will be printed");
     loop {
         let source = rl.readline("> ")?;
         rl.add_history_entry(source.as_str());
