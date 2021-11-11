@@ -247,23 +247,25 @@ impl Value {
             Value::Null => write!(f, "null"),
             Value::AttrSet(x) => {
                 let indent = " ".repeat(indent_count);
+                let body_ident = " ".repeat(indent_count + 2);
                 writeln!(f, "{{")?;
                 for (k, v) in x.iter() {
-                    write!(f, "{}{} = ", indent, k)?;
+                    write!(f, "{}{} = ", body_ident, k)?;
                     v.fmt_indented(f, indent_count + 2)?;
                     writeln!(f)?;
                 }
-                write!(f, "}}")
+                write!(f, "{}}}", indent)
             }
             Value::List(x) => {
                 let indent = " ".repeat(indent_count);
+                let body_ident = " ".repeat(indent_count + 2);
                 writeln!(f, "[")?;
                 for v in x.iter() {
-                    write!(f, "{}", indent)?;
+                    write!(f, "{}", body_ident)?;
                     v.fmt_indented(f, indent_count + 2)?;
                     writeln!(f)?;
                 }
-                write!(f, "]")
+                write!(f, "{}]", indent)
             }
             Value::Thunk(ctx, node) => eval_ctx(node.to_owned(), ctx.to_owned())
                 .map_err(|_| fmt::Error)?
@@ -287,7 +289,7 @@ impl From<&Value> for NumericValue {
 
 impl Display for Value {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.fmt_indented(f, 2)
+        self.fmt_indented(f, 0)
     }
 }
 

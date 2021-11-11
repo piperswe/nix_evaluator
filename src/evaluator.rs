@@ -94,6 +94,20 @@ impl EvaluationContext {
     pub fn get(&self, ident: &str) -> Option<&Value> {
         self.0.get(ident)
     }
+
+    pub fn merge(&self, other: &Self) -> Self {
+        let mut res = self.0.clone();
+        for (k, v) in other.0.iter() {
+            res.insert_mut(k.to_owned(), v.to_owned());
+        }
+        Self(res)
+    }
+}
+
+impl From<HashTrieMap<String, Value>> for EvaluationContext {
+    fn from(m: HashTrieMap<String, Value>) -> Self {
+        Self(m)
+    }
 }
 
 impl Default for EvaluationContext {
@@ -198,7 +212,7 @@ fn eval_bin_op(node: BinOp, context: EvaluationContext) -> Result<Value> {
 
 fn eval_apply(node: Apply, context: EvaluationContext) -> Result<Value> {
     let f = eval_ctx(expect_child(node.lambda())?, context.clone())?;
-    let arg = eval_ctx(expect_child(node.value())?, context)?;
+    let arg = thunkify(expect_child(node.value())?, context)?;
     f.materialize()?.call(arg)
 }
 
@@ -232,7 +246,7 @@ fn eval_select(node: Select, context: EvaluationContext) -> Result<Value> {
 fn eval_list(node: rnix::types::List, context: EvaluationContext) -> Result<Value> {
     let mut v = Vector::new();
     for item in node.items() {
-        v.push_back_mut(eval_ctx(item, context.clone())?);
+        v.push_back_mut(thunkify(item, context.clone())?);
     }
     Ok(Value::List(v))
 }
@@ -264,7 +278,7 @@ fn eval_let_in(node: LetIn, context: EvaluationContext) -> Result<Value> {
     let mut ctx = context;
     for entry in node.entries() {
         let k = expect_child(entry.key())?;
-        let v = Value::Thunk(ctx.clone(), expect_child(entry.value())?);
+        let v = thunkify(expect_child(entry.value())?, ctx.clone())?;
         let mut path_vec = vec![];
         for part in k.path() {
             let token = expect_child(part.first_token())?;
@@ -273,6 +287,40 @@ fn eval_let_in(node: LetIn, context: EvaluationContext) -> Result<Value> {
         ctx = ctx.with_path(&path_vec, v);
     }
     eval_ctx(expect_child(node.body())?, ctx)
+}
+
+fn eval_with(node: With, context: EvaluationContext) -> Result<Value> {
+    let ns = expect_child(node.namespace())?;
+    let ns_val = eval_ctx(ns, context.clone())?;
+    if let Value::AttrSet(ns) = ns_val {
+        let body = expect_child(node.body())?;
+        let ctx = context.merge(&ns.into());
+        thunkify(body, ctx)
+    } else {
+        Err(EvalError::TypeMismatch(
+            "attribute set".into(),
+            ns_val.human_readable_type().into(),
+        ))
+    }
+}
+
+pub fn thunkify(node: SyntaxNode, context: EvaluationContext) -> Result<Value> {
+    match node.kind() {
+        rnix::SyntaxKind::NODE_IDENT => eval_ctx(node, context),
+        rnix::SyntaxKind::NODE_SELECT => eval_ctx(node, context),
+        rnix::SyntaxKind::NODE_STRING => eval_ctx(node, context),
+        rnix::SyntaxKind::NODE_LAMBDA => eval_ctx(node, context),
+        rnix::SyntaxKind::NODE_LET_IN => eval_ctx(node, context),
+        rnix::SyntaxKind::NODE_LIST => eval_ctx(node, context),
+        rnix::SyntaxKind::NODE_PAREN => thunkify(
+            expect_child(Paren::cast(node).ok_or(EvalError::Mismatch)?.inner())?,
+            context,
+        ),
+        rnix::SyntaxKind::NODE_ROOT => eval_ctx(node, context),
+        rnix::SyntaxKind::NODE_ATTR_SET => eval_ctx(node, context),
+        rnix::SyntaxKind::NODE_LITERAL => eval_ctx(node, context),
+        _ => Ok(Value::Thunk(context, node)),
+    }
 }
 
 pub fn eval_ctx(node: SyntaxNode, context: EvaluationContext) -> Result<Value> {
@@ -304,7 +352,7 @@ pub fn eval_ctx(node: SyntaxNode, context: EvaluationContext) -> Result<Value> {
         rnix::SyntaxKind::NODE_KEY_VALUE => nyi("attribute sets"),
         rnix::SyntaxKind::NODE_UNARY_OP => nyi("unary operators"),
         rnix::SyntaxKind::NODE_LITERAL => eval_literal(cast(node)?),
-        rnix::SyntaxKind::NODE_WITH => nyi("with"),
+        rnix::SyntaxKind::NODE_WITH => eval_with(cast(node)?, context),
         _ => Err(EvalError::UnexpectedNode),
     }
 }
