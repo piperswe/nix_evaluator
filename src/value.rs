@@ -120,12 +120,23 @@ impl Value {
     }
 
     pub fn add(&self, rhs_v: &Value) -> Result<Value, ArithmeticError> {
-        match normalize_numerics(self, rhs_v)? {
-            Normalized::Integer(lhs, rhs) => Ok(lhs
-                .checked_add(rhs)
-                .ok_or_else(|| ArithmeticError::Overflow(self.into(), rhs_v.into()))?
-                .into()),
-            Normalized::Floating(lhs, rhs) => Ok((lhs + rhs).into()),
+        if let Value::String(lhs) = self {
+            if let Value::String(rhs) = rhs_v {
+                Ok(Value::String(lhs.to_owned() + rhs))
+            } else {
+                Err(ArithmeticError::TypeMismatch(
+                    "string".into(),
+                    rhs_v.human_readable_type().into(),
+                ))
+            }
+        } else {
+            match normalize_numerics(self, rhs_v)? {
+                Normalized::Integer(lhs, rhs) => Ok(lhs
+                    .checked_add(rhs)
+                    .ok_or_else(|| ArithmeticError::Overflow(self.into(), rhs_v.into()))?
+                    .into()),
+                Normalized::Floating(lhs, rhs) => Ok((lhs + rhs).into()),
+            }
         }
     }
 
