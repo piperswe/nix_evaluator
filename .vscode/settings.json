@@ -1,0 +1,6 @@
+{
+    "editor.formatOnSave": true,
+    "nixEnvSelector.nixFile": "${workspaceRoot}/shell.nix",
+    "files.insertFinalNewline": true,
+    "rust-analyzer.checkOnSave.command": "clippy"
+}

@@ -1,0 +1,30 @@
+[package]
+name = "nix_evaluator"
+version = "0.0.0"
+edition = "2018"
+
+[features]
+default = ["compare_versions", "serde", "json", "md5", "sha1", "sha256", "sha512", "regex"]
+compare_versions = ["version-compare"]
+json = ["serde", "serde_json"]
+sha1 = ["sha-1"]
+sha256 = ["sha2"]
+sha512 = ["sha2"]
+
+[dependencies]
+thiserror = "1"
+rnix = "0.9"
+rpds = "0.10"
+
+# Used for implementing built-in functions
+version-compare = { version = "0.1", optional = true }
+serde = { version = "1", optional = true }
+serde_json = { version = "1", optional = true }
+md5 = { version = "0.7", optional = true }
+sha-1 = { version = "0.9", optional = true }
+sha2 = { version = "0.9", optional = true }
+regex = { version = "1", optional = true }
+
+# CLI-specific
+color-eyre = "0.5"
+rustyline = "9"
