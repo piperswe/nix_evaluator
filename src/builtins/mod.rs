@@ -154,8 +154,17 @@ pub fn builtins_set() -> Value {
 pub fn base_context() -> HashTrieMap<String, Value> {
     let mut s = HashTrieMap::new();
     let builtins = builtins_set();
+    fn add<F: 'static + Fn(Value) -> Result>(
+        s: &mut HashTrieMap<String, Value>,
+        name: &'static str,
+        f: F,
+    ) {
+        s.insert_mut(name.to_string(), Value::BuiltinFunction(Rc::new(f)));
+    }
 
     s.insert_mut("builtins".to_string(), builtins);
+    add(&mut s, "derivation", definitions::derivation);
+    add(&mut s, "import", definitions::import);
 
     s
 }

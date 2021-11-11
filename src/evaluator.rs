@@ -33,9 +33,9 @@ pub enum EvalError {
     #[error("No such index {0} in attrset")]
     NoSuchIndex(ErrorString),
 
-    #[error(transparent)]
+    #[error("An arithmetic operation failed")]
     Arithmetic(#[from] ArithmeticError),
-    #[error(transparent)]
+    #[error("A call to a built-in function failed")]
     Builtin(#[from] BuiltinError),
 }
 
