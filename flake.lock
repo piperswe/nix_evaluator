@@ -38,11 +38,11 @@
         "rust-overlay": "rust-overlay"
       },
       "locked": {
-        "lastModified": 1636673666,
-        "narHash": "sha256-1m+Pa0XmS8dgLOMdlEJqzPqQNGlRK+BWafFBTIZFXq0=",
+        "lastModified": 1636673982,
+        "narHash": "sha256-VE0Uq6oeCWy+s/6YNEo+ifc8TO3/JM/GVnFixnJq2Ug=",
         "owner": "piperswe",
         "repo": "mkrustflake",
-        "rev": "320116356350f6390550a785e47452f14d3acd07",
+        "rev": "2773cdd457b2d784d1e127fa1a1369fa03180884",
         "type": "github"
       },
       "original": {
