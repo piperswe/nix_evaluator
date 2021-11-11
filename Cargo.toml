@@ -3,13 +3,24 @@ name = "nix_evaluator"
 version = "0.0.0"
 edition = "2018"
 
+[lib]
+name = "nix_evaluator"
+path = "src/lib.rs"
+
+[[bin]]
+name = "nix_evaluator"
+path = "src/main.rs"
+required-features = ["cli"]
+
 [features]
-default = ["compare_versions", "serde", "json", "md5", "sha1", "sha256", "sha512", "regex"]
+default = ["compare_versions", "json", "all_hashes", "regex", "cli"]
 compare_versions = ["version-compare"]
 json = ["serde", "serde_json"]
+all_hashes = ["md5", "sha1", "sha256", "sha512"]
 sha1 = ["sha-1"]
 sha256 = ["sha2"]
 sha512 = ["sha2"]
+cli = ["color-eyre", "rustyline"]
 
 [dependencies]
 thiserror = "1"
@@ -26,5 +37,5 @@ sha2 = { version = "0.9", optional = true }
 regex = { version = "1", optional = true }
 
 # CLI-specific
-color-eyre = "0.5"
-rustyline = "9"
+color-eyre = { version = "0.5", optional = true }
+rustyline = { version = "9", optional = true }
